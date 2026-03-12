@@ -1,0 +1,9 @@
+{
+  "id": "ollama",
+  "name": "Ollama",
+  "description": "Run LLMs locally on your VM. Deploy Llama, Mistral and other models with a simple API.",
+  "category": "AI & ML",
+  "icon": "icon.png",
+  "version": "1.0.0",
+  "compose_file": "docker-compose.yml"
+}
