@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  metabase-db:
+    image: postgres:16
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - metabase_db_data:/var/lib/postgresql/data
+    networks:
+      - metabase-network
+
+  metabase:
+    image: metabase/metabase:latest
+    restart: always
+    depends_on:
+      - metabase-db
+    env_file:
+      - .env
+    environment:
+      MB_DB_TYPE: ${MB_DB_TYPE}
+      MB_DB_DBNAME: ${MB_DB_DBNAME}
+      MB_DB_HOST: ${MB_DB_HOST}
+      MB_DB_PORT: ${MB_DB_PORT}
+      MB_DB_USER: ${MB_DB_USER}
+      MB_DB_PASS: ${MB_DB_PASS}
+    ports:
+      - "${METABASE_PORT}:3000"
+    volumes:
+      - ./metabase-data:/metabase-data
+    networks:
+      - metabase-network
+
+volumes:
+  metabase_db_data:
+
+networks:
+  metabase-network:
+    driver: bridge
