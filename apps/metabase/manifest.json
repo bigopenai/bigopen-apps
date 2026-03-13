@@ -1,0 +1,9 @@
+{
+  "id": "metabase",
+  "name": "Metabase",
+  "description": "Metabase is an open-source business intelligence and data visualization platform that lets you explore data, create dashboards, and share insights without writing SQL.",
+  "category": "Analytics & BI",
+  "icon": "icon.png",
+  "version": "1.0.0",
+  "compose_file": "docker-compose.yml"
+}
