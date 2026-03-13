@@ -5,5 +5,17 @@
   "category": "Analytics & BI",
   "icon": "icon.png",
   "version": "1.0.0",
-  "compose_file": "docker-compose.yml"
+  "compose_file": "docker-compose.yml",
+  "env":{
+    "POSTGRES_DB":"metabase",
+    "POSTGRES_USER":"metabase",
+    "POSTGRES_PASSWORD":"ysduhasjknd2qiek",
+    "MB_DB_TYPE":"postgres",
+    "MB_DB_DBNAME":"metabase",
+    "MB_DB_HOST":"metabase-db",
+    "MB_DB_PORT":"5432",
+    "MB_DB_USER":"metabase",
+    "MB_DB_PASS":"ysduhasjknd2qiek",
+    "METABASE_PORT":"4000"
+  }
 }
