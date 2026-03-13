@@ -5,5 +5,6 @@
   "category": "AI & ML",
   "icon": "icon.png",
   "version": "1.0.0",
+  "application_port": "11434",
   "compose_file": "docker-compose.yml"
 }
