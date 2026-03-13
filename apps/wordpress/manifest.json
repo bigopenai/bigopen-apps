@@ -1,0 +1,7 @@
+{
+  "id": "wordpress",
+  "name": "Wordpress",
+  "description": "This is a wordpress app",
+  "category": "Web",
+  "version": "1.0.0"
+}
