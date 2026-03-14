@@ -1,0 +1,7 @@
+{
+  "id": "ollama",
+  "name": "Ollama",
+  "description": "This is ollama app",
+  "category": "Web",
+  "version": "1.0.0"
+}
