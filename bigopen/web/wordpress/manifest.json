@@ -1,9 +1,0 @@
-{
-  "id": "wordpress",
-  "name": "Wordpress",
-  "description": "This is a wordpress app",
-  "category": "Web",
-  "version": "1.0.0",
-  "application_port": "8080",
-  "compose_file": "docker-compose.yml"
-}
