@@ -1,0 +1,17 @@
+﻿services:
+  localai:
+    image: localai/localai:latest-aio-cpu
+    restart: unless-stopped
+    ports:
+      - "8085:8080"
+    environment:
+      DEBUG: ${LOCALAI_DEBUG:-false}
+      THREADS: ${LOCALAI_THREADS:-2}
+    volumes:
+      - localai_models:/models
+    mem_limit: 1g
+    cpus: 1.0
+
+volumes:
+  localai_models:
+

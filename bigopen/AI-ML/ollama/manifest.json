@@ -1,0 +1,9 @@
+{
+  "id": "ollama",
+  "name": "Ollama",
+  "description": "Run and serve local large language models with a lightweight API.",
+  "category": "AI-ML",
+  "version": "1.0.0",
+  "application_port": "11434",
+  "compose_file": "docker-compose.yml"
+}

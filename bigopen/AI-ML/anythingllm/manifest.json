@@ -1,0 +1,9 @@
+{
+  "id": "anythingllm",
+  "name": "AnythingLLM",
+  "description": "AnythingLLM is a full-stack AI application that allows you to chat with your documents using LLMs like Ollama or OpenAI.",
+  "category": "AI-ML",
+  "version": "1.0.0",
+  "application_port": "3001",
+  "compose_file": "docker-compose.yml"
+}
