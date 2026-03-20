@@ -1,0 +1,9 @@
+{
+  "id": "mongodb",
+  "name": "MongoDB",
+  "description": "A document-oriented NoSQL database for modern applications.",
+  "category": "Database",
+  "version": "1.0.0",
+  "application_port": "27017",
+  "compose_file": "docker-compose.yml"
+}
