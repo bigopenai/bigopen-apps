@@ -1,0 +1,9 @@
+{
+  "id": "couchdb",
+  "name": "CouchDB",
+  "description": "Apache CouchDB is a NoSQL database that uses JSON for documents and HTTP for its API.",
+  "category": "Database",
+  "version": "1.0.0",
+  "application_port": "5984",
+  "compose_file": "docker-compose.yml"
+}
