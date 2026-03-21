@@ -1,0 +1,9 @@
+{
+  "id": "windmill",
+  "name": "Windmill",
+  "description": "A developer-focused workflow automation platform for scripts, flows, and internal tools.",
+  "category": "Automation",
+  "version": "1.0.0",
+  "application_port": "8001",
+  "compose_file": "docker-compose.yml"
+}

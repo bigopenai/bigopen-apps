@@ -1,0 +1,9 @@
+{
+  "id": "netdata",
+  "name": "Netdata",
+  "description": "A real-time observability dashboard for systems and containers.",
+  "category": "Monitoring",
+  "version": "1.0.0",
+  "application_port": "19999",
+  "compose_file": "docker-compose.yml"
+}

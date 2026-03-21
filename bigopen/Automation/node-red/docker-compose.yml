@@ -1,0 +1,14 @@
+﻿services:
+  node-red:
+    image: nodered/node-red:3.1
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    volumes:
+      - node_red_data:/data
+    mem_limit: 512m
+    cpus: 0.5
+
+volumes:
+  node_red_data:
+

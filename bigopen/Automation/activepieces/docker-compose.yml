@@ -1,0 +1,23 @@
+﻿services:
+  activepieces:
+    image: activepieces/activepieces:latest
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    environment:
+      AP_ENV: production
+      AP_FRONTEND_URL: ${AP_FRONTEND_URL:-http://localhost:8090}
+      AP_SERVER_URL: ${AP_SERVER_URL:-http://localhost:8090}
+      AP_ENCRYPTION_KEY: ${AP_ENCRYPTION_KEY:-change-this-activepieces-encryption-key}
+      AP_JWT_SECRET: ${AP_JWT_SECRET:-change-this-activepieces-jwt-secret}
+      AP_DB_TYPE: sqlite3
+      AP_SQLITE_DB_PATH: /data/activepieces.sqlite
+      AP_DATA_DIRECTORY: /data
+    volumes:
+      - activepieces_data:/data
+    mem_limit: 768m
+    cpus: 0.75
+
+volumes:
+  activepieces_data:
+

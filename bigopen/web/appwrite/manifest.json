@@ -1,0 +1,9 @@
+{
+  "id": "appwrite",
+  "name": "Appwrite",
+  "description": "A self-hosted backend platform with auth, database, and storage APIs.",
+  "category": "Web",
+  "version": "1.0.0",
+  "application_port": "8087",
+  "compose_file": "docker-compose.yml"
+}

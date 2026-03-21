@@ -1,0 +1,9 @@
+{
+  "id": "portainer",
+  "name": "Portainer",
+  "description": "Manage Docker environments through a compact self-hosted web UI.",
+  "category": "DevOps",
+  "version": "1.0.0",
+  "application_port": "9000",
+  "compose_file": "docker-compose.yml"
+}

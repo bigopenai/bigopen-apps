@@ -1,0 +1,17 @@
+services:
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.55.1
+    restart: unless-stopped
+    ports:
+      - "8089:8080"
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    mem_limit: 512m
+    cpus: 0.5

@@ -1,0 +1,41 @@
+﻿services:
+  drone-server:
+    image: drone/drone:2
+    restart: unless-stopped
+    ports:
+      - "8083:80"
+    environment:
+      DRONE_SERVER_HOST: ${DRONE_SERVER_HOST:-localhost:8083}
+      DRONE_SERVER_PROTO: http
+      DRONE_RPC_SECRET: ${DRONE_RPC_SECRET:-change-this-drone-rpc-secret}
+      DRONE_DATABASE_DRIVER: sqlite3
+      DRONE_DATABASE_DATASOURCE: /data/database.sqlite
+      DRONE_AGENTS_ENABLED: "true"
+      DRONE_USER_CREATE: ${DRONE_USER_CREATE:-username:admin,admin:true}
+      DRONE_GITHUB_SERVER: ${DRONE_GITHUB_SERVER:-https://github.com}
+      DRONE_GITHUB_CLIENT_ID: ${DRONE_GITHUB_CLIENT_ID:-replace-me}
+      DRONE_GITHUB_CLIENT_SECRET: ${DRONE_GITHUB_CLIENT_SECRET:-replace-me}
+    volumes:
+      - drone_server_data:/data
+    mem_limit: 512m
+    cpus: 0.5
+
+  drone-runner:
+    image: drone/drone-runner-docker:1
+    restart: unless-stopped
+    depends_on:
+      - drone-server
+    environment:
+      DRONE_RPC_PROTO: http
+      DRONE_RPC_HOST: drone-server
+      DRONE_RPC_SECRET: ${DRONE_RPC_SECRET:-change-this-drone-rpc-secret}
+      DRONE_RUNNER_CAPACITY: ${DRONE_RUNNER_CAPACITY:-1}
+      DRONE_RUNNER_NAME: ${DRONE_RUNNER_NAME:-bigopen-runner}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    mem_limit: 512m
+    cpus: 0.5
+
+volumes:
+  drone_server_data:
+

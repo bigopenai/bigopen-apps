@@ -1,0 +1,9 @@
+{
+  "id": "uptime-kuma",
+  "name": "Uptime Kuma",
+  "description": "Monitor website and service uptime from a simple self-hosted dashboard.",
+  "category": "Monitoring",
+  "version": "1.0.0",
+  "application_port": "3001",
+  "compose_file": "docker-compose.yml"
+}

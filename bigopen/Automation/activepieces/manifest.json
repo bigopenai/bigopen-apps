@@ -1,0 +1,9 @@
+{
+  "id": "activepieces",
+  "name": "Activepieces",
+  "description": "A no-code automation platform for connecting SaaS apps and internal workflows.",
+  "category": "Automation",
+  "version": "1.0.0",
+  "application_port": "8090",
+  "compose_file": "docker-compose.yml"
+}

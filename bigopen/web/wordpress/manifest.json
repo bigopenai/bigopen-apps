@@ -1,7 +1,7 @@
 {
   "id": "wordpress",
-  "name": "Wordpress",
-  "description": "This is a wordpress app",
+  "name": "WordPress",
+  "description": "A popular content management system backed by an internal MariaDB database.",
   "category": "Web",
   "version": "1.0.0",
   "application_port": "8080",

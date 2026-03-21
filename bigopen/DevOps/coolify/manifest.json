@@ -1,0 +1,9 @@
+{
+  "id": "coolify",
+  "name": "Coolify",
+  "description": "A self-hosted PaaS for deploying applications, databases, and services on your own servers.",
+  "category": "DevOps",
+  "version": "1.0.0",
+  "application_port": "8000",
+  "compose_file": "docker-compose.yml"
+}

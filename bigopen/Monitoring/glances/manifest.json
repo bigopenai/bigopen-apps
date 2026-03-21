@@ -1,0 +1,9 @@
+{
+  "id": "glances",
+  "name": "Glances",
+  "description": "A lightweight system monitoring dashboard with a built-in web UI.",
+  "category": "Monitoring",
+  "version": "1.0.0",
+  "application_port": "61208",
+  "compose_file": "docker-compose.yml"
+}
