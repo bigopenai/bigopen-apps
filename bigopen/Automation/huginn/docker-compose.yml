@@ -1,0 +1,21 @@
+﻿services:
+  huginn:
+    image: huginn/huginn:latest
+    restart: unless-stopped
+    ports:
+      - "3008:3000"
+    environment:
+      DATABASE_ADAPTER: sqlite3
+      DATABASE_NAME: /var/lib/huginn/huginn.sqlite3
+      APP_SECRET_TOKEN: ${HUGINN_APP_SECRET_TOKEN:-change-this-huginn-secret}
+      INVITATION_CODE: ${HUGINN_INVITATION_CODE:-change-this-invite-code}
+      DOMAIN: ${HUGINN_DOMAIN:-localhost:3008}
+      FORCE_SSL: "false"
+    volumes:
+      - huginn_data:/var/lib/huginn
+    mem_limit: 512m
+    cpus: 0.5
+
+volumes:
+  huginn_data:
+

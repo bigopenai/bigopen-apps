@@ -1,0 +1,9 @@
+{
+  "id": "flowise",
+  "name": "Flowise",
+  "description": "Build and run low-code AI workflows with a visual interface.",
+  "category": "AI-ML",
+  "version": "1.0.0",
+  "application_port": "3003",
+  "compose_file": "docker-compose.yml"
+}

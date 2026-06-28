@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  anythingllm:
+    image: mintplexlabs/anythingllm:latest
+    container_name: anythingllm
+    ports:
+      - '3001:3001'
+    environment:
+      - STORAGE_DIR=/app/server/storage
+    volumes:
+      - anythingllm_data:/app/server/storage
+    mem_limit: 1g
+    cpus: 1.0
+    restart: unless-stopped
+
+volumes:
+  anythingllm_data:

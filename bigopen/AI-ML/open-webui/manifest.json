@@ -1,0 +1,9 @@
+{
+  "id": "open-webui",
+  "name": "Open WebUI",
+  "description": "A self-hosted web interface for local and remote language models.",
+  "category": "AI-ML",
+  "version": "1.0.0",
+  "application_port": "3002",
+  "compose_file": "docker-compose.yml"
+}

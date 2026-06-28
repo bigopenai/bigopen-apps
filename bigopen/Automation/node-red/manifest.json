@@ -1,0 +1,9 @@
+{
+  "id": "node-red",
+  "name": "Node-RED",
+  "description": "A flow-based programming tool for wiring together APIs, devices, and services.",
+  "category": "Automation",
+  "version": "1.0.0",
+  "application_port": "1880",
+  "compose_file": "docker-compose.yml"
+}

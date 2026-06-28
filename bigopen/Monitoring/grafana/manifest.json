@@ -1,0 +1,9 @@
+{
+  "id": "grafana",
+  "name": "Grafana",
+  "description": "Visualize metrics and logs with dashboards and alerting.",
+  "category": "Monitoring",
+  "version": "1.0.0",
+  "application_port": "3000",
+  "compose_file": "docker-compose.yml"
+}

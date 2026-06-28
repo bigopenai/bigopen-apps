@@ -1,0 +1,9 @@
+{
+  "id": "gitea",
+  "name": "Gitea",
+  "description": "A lightweight self-hosted Git service with a web UI, issues, and CI-friendly integrations.",
+  "category": "DevOps",
+  "version": "1.0.0",
+  "application_port": "3005",
+  "compose_file": "docker-compose.yml"
+}

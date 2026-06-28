@@ -1,0 +1,9 @@
+{
+  "id": "postgres",
+  "name": "PostgreSQL",
+  "description": "A production-ready open-source relational database.",
+  "category": "Database",
+  "version": "1.0.0",
+  "application_port": "5432",
+  "compose_file": "docker-compose.yml"
+}

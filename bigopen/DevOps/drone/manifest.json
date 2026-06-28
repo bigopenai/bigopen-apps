@@ -1,0 +1,9 @@
+{
+  "id": "drone",
+  "name": "Drone",
+  "description": "A container-native CI/CD platform with a lightweight web dashboard.",
+  "category": "DevOps",
+  "version": "1.0.0",
+  "application_port": "8083",
+  "compose_file": "docker-compose.yml"
+}

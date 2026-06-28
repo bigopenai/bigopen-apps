@@ -1,0 +1,9 @@
+{
+  "id": "localai",
+  "name": "LocalAI",
+  "description": "Serve local AI models through an OpenAI-compatible API without GPUs.",
+  "category": "AI-ML",
+  "version": "1.0.0",
+  "application_port": "8085",
+  "compose_file": "docker-compose.yml"
+}

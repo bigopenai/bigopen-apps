@@ -1,0 +1,9 @@
+{
+  "id": "ghost",
+  "name": "Ghost",
+  "description": "A modern publishing platform for blogs, newsletters, and memberships.",
+  "category": "Web",
+  "version": "1.0.0",
+  "application_port": "2368",
+  "compose_file": "docker-compose.yml"
+}

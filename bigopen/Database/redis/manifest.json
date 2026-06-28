@@ -1,0 +1,9 @@
+{
+  "id": "redis",
+  "name": "Redis",
+  "description": "An in-memory data store used for caching, queues, and fast data access.",
+  "category": "Database",
+  "version": "1.0.0",
+  "application_port": "6379",
+  "compose_file": "docker-compose.yml"
+}

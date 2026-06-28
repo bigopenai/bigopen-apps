@@ -1,0 +1,9 @@
+{
+  "id": "nocodb",
+  "name": "NocoDB",
+  "description": "Turn relational data into a collaborative spreadsheet-style interface.",
+  "category": "Web",
+  "version": "1.0.0",
+  "application_port": "8086",
+  "compose_file": "docker-compose.yml"
+}

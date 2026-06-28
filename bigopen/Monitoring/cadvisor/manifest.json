@@ -1,0 +1,9 @@
+{
+  "id": "cadvisor",
+  "name": "cAdvisor",
+  "description": "A container resource monitoring agent with per-container metrics and a web UI.",
+  "category": "Monitoring",
+  "version": "1.0.0",
+  "application_port": "8089",
+  "compose_file": "docker-compose.yml"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "mariadb",
+  "name": "MariaDB",
+  "description": "A lightweight relational database server compatible with MySQL.",
+  "category": "Database",
+  "version": "1.0.0",
+  "application_port": "3306",
+  "compose_file": "docker-compose.yml"
+}

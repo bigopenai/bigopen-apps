@@ -1,0 +1,15 @@
+﻿services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --save 60 1000
+    volumes:
+      - redis_data:/data
+    mem_limit: 256m
+    cpus: 0.25
+
+volumes:
+  redis_data:
+

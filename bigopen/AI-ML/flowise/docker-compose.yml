@@ -1,0 +1,20 @@
+﻿services:
+  flowise:
+    image: flowiseai/flowise:latest
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    environment:
+      PORT: 3000
+      FLOWISE_USERNAME: ${FLOWISE_USERNAME:-admin}
+      FLOWISE_PASSWORD: ${FLOWISE_PASSWORD:-change-this-password}
+      SECRETKEY_OVERWRITE: ${FLOWISE_SECRET_KEY:-change-this-flowise-secret}
+      DATABASE_TYPE: sqlite
+    volumes:
+      - flowise_data:/root/.flowise
+    mem_limit: 768m
+    cpus: 0.75
+
+volumes:
+  flowise_data:
+

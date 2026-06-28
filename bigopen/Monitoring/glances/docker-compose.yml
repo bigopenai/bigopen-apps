@@ -1,0 +1,13 @@
+services:
+  glances:
+    image: nicolargo/glances:latest-full
+    restart: unless-stopped
+    ports:
+      - "61208-61209:61208-61209"
+    environment:
+      GLANCES_OPT: -w
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    pid: host
+    mem_limit: 512m
+    cpus: 0.5

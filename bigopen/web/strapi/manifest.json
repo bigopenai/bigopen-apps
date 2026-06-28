@@ -1,0 +1,9 @@
+{
+  "id": "strapi",
+  "name": "Strapi",
+  "description": "A headless CMS for building content APIs and admin experiences.",
+  "category": "Web",
+  "version": "1.0.0",
+  "application_port": "1337",
+  "compose_file": "docker-compose.yml"
+}
