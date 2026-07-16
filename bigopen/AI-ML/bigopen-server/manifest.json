@@ -1,0 +1,12 @@
+{
+  "id": "bigopen-server",
+  "name": "BigOpen Server (LLM Inference)",
+  "description": "Downloads a binary and runs it as a systemd service on the host - not a container - with automatic model management and a public tunnel",
+  "category": "AI-ML",
+  "version": "1.0.0",
+  "application_port": "8080",
+  "install_type": "native",
+  "native": {
+    "service_id": "bigopen-server"
+  }
+}
