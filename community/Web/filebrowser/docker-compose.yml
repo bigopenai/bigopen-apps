@@ -7,7 +7,12 @@ services:
     ports:
       - "8070:80"
     volumes:
-      - ./data:/srv
-      - ./database:/database
-      - ./config:/config
+      - filebrowser_data:/srv
+      - filebrowser_database:/database
+      - filebrowser_config:/config
     restart: unless-stopped
+
+volumes:
+  filebrowser_data:
+  filebrowser_database:
+  filebrowser_config:
