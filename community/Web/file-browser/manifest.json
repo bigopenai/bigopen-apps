@@ -1,0 +1,10 @@
+{
+  "id": "file-browser",
+  "name": "File Browser",
+  "description": "filebrowser",
+  "category": "Web",
+  "version": "1.0.0",
+  "application_port": "8070",
+  "install_type": "compose",
+  "submittedBy": 11
+}
