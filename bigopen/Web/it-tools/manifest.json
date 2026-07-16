@@ -1,0 +1,9 @@
+{
+  "id": "it-tools",
+  "name": "it-tools",
+  "description": "it-tools",
+  "category": "Web",
+  "version": "1.0.0",
+  "application_port": "8080",
+  "install_type": "compose"
+}
