@@ -1,0 +1,12 @@
+{
+  "id": "Openclaw",
+  "name": "Openclaw",
+  "description": "test ",
+  "category": "AI-ML",
+  "version": "1.0.0",
+  "application_port": "80",
+  "install_type": "native",
+  "native": {
+    "service_id": "openclaw"
+  }
+}
