@@ -10,10 +10,11 @@
       N8N_PROTOCOL: http
       NODE_ENV: production
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-UTC}
+      NODE_OPTIONS: --max-old-space-size=2560
     volumes:
       - n8n_data:/home/node/.n8n
-    mem_limit: 512m
-    cpus: 0.5
+    mem_limit: 3g
+    cpus: 2
 
 volumes:
   n8n_data:
