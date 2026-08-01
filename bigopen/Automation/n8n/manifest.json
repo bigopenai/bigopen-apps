@@ -4,6 +4,5 @@
   "description": "An extendable workflow automation platform with a visual editor.",
   "category": "Automation",
   "version": "1.0.0",
-  "application_port": "5678",
-  "compose_file": "docker-compose.yml"
+  "install_type": "compose"
 }
