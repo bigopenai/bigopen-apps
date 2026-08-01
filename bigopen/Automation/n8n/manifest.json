@@ -4,5 +4,6 @@
   "description": "An extendable workflow automation platform with a visual editor.",
   "category": "Automation",
   "version": "1.0.0",
-  "install_type": "compose"
+  "install_type": "compose",
+  "application_port": "5678"
 }
