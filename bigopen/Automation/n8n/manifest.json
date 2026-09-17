@@ -5,5 +5,10 @@
   "category": "Automation",
   "version": "1.0.0",
   "install_type": "compose",
-  "application_port": "5678"
+  "application_port": "5678",
+  "public_url_env": {
+    "host": "N8N_HOST",
+    "protocol": "N8N_PROTOCOL",
+    "url": "WEBHOOK_URL"
+  }
 }
