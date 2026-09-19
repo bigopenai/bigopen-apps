@@ -1,0 +1,10 @@
+{
+  "id": "jenkins",
+  "name": "Jenkins",
+  "description": "The leading open-source automation server for building, testing, and deploying software with a rich plugin ecosystem.",
+  "category": "DevOps",
+  "version": "1.0.0",
+  "application_port": "8088",
+  "license": "MIT",
+  "compose_file": "docker-compose.yml"
+}

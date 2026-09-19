@@ -1,0 +1,17 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    restart: unless-stopped
+    ports:
+      - "8088:8080"
+      - "50000:50000"
+    environment:
+      JAVA_OPTS: ${JENKINS_JAVA_OPTS:--Xmx768m}
+      JENKINS_OPTS: ${JENKINS_OPTS:---prefix=/}
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    mem_limit: 1g
+    cpus: 1.0
+
+volumes:
+  jenkins_home:
