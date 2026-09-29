@@ -1,0 +1,15 @@
+services:
+  jupyter-notebook:
+    image: jupyter/scipy-notebook:latest
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:-change-this-jupyter-token}
+    volumes:
+      - jupyter_notebook_data:/home/jovyan/work
+    mem_limit: 2g
+    cpus: 1.0
+
+volumes:
+  jupyter_notebook_data:

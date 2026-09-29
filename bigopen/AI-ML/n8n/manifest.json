@@ -2,7 +2,7 @@
   "id": "n8n",
   "name": "n8n",
   "description": "An extendable workflow automation platform with a visual editor.",
-  "category": "Automation",
+  "category": "AI-ML",
   "version": "1.0.0",
   "install_type": "compose",
   "application_port": "5678",
