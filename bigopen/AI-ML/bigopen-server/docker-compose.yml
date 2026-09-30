@@ -46,7 +46,6 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        set -e
         dest="/models/$$MODEL_FILE"
         if [ -s "$$dest" ]; then
           echo "Model already downloaded: $$MODEL_FILE"
@@ -54,13 +53,30 @@ services:
         fi
         url="https://huggingface.co/$$MODEL_REPO/resolve/main/$$MODEL_FILE"
         echo "Downloading $$MODEL_FILE from $$MODEL_REPO (this can take a while)..."
-        if [ -n "$$HF_TOKEN" ]; then
-          curl -fL --retry 5 --retry-delay 5 -C - -H "Authorization: Bearer $$HF_TOKEN" -o "$$dest.part" "$$url"
-        else
-          curl -fL --retry 5 --retry-delay 5 -C - -o "$$dest.part" "$$url"
-        fi
-        mv "$$dest.part" "$$dest"
-        echo "Model ready: $$MODEL_FILE"
+        attempt=1
+        while [ "$$attempt" -le 5 ]; do
+          if [ -n "$$HF_TOKEN" ]; then
+            curl -fsSL -C - -H "Authorization: Bearer $$HF_TOKEN" -o "$$dest.part" "$$url" &
+          else
+            curl -fsSL -C - -o "$$dest.part" "$$url" &
+          fi
+          pid=$$!
+          # One readable line every few seconds instead of curl's redrawing meter.
+          while kill -0 "$$pid" 2>/dev/null; do
+            sleep 5
+            echo "  downloaded so far: $$(du -h "$$dest.part" 2>/dev/null | cut -f1)"
+          done
+          if wait "$$pid"; then
+            mv "$$dest.part" "$$dest"
+            echo "Model ready: $$MODEL_FILE"
+            exit 0
+          fi
+          echo "Download attempt $$attempt failed, retrying in 5s..."
+          attempt=$$((attempt + 1))
+          sleep 5
+        done
+        echo "Could not download $$MODEL_FILE from $$MODEL_REPO. Check the repo and file name (and HF_TOKEN for gated models)."
+        exit 1
 
   bigopen-server:
     <<: *server
