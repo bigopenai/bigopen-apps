@@ -1,12 +1,9 @@
 {
   "id": "bigopen-server",
   "name": "BigOpen Server (LLM Inference)",
-  "description": "Downloads a binary and runs it as a systemd service on the host - not a container - with automatic model management and a public tunnel",
+  "description": "Runs the llama.cpp inference server in Docker (CPU, or an NVIDIA GPU) with an OpenAI-compatible API. Downloads your chosen model from Hugging Face on first start.",
   "category": "AI-ML",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "application_port": "8080",
-  "install_type": "native",
-  "native": {
-    "service_id": "bigopen-server"
-  }
+  "compose_file": "docker-compose.yml"
 }

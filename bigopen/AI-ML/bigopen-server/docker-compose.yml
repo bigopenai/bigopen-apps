@@ -1,0 +1,83 @@
+# BigOpen Server: llama.cpp's llama-server, run in Docker (same on Linux, macOS
+# and Windows - nothing OS-specific to install).
+#
+#   model-init          downloads the model from Hugging Face into a volume (once)
+#   bigopen-server      the server on CPU        (COMPOSE_PROFILES=cpu, the default)
+#   bigopen-server-gpu  the server on an NVIDIA GPU (COMPOSE_PROFILES=gpu; needs the
+#                       NVIDIA Container Toolkit, or Docker Desktop on Windows)
+#
+# Every variable with a default value below shows up as a setting in the install
+# form (so keep dollar-brace text out of comments: the form reads them too).
+# To serve another model later, put its .gguf file in the bigopen_models volume
+# (or change BIGOPEN_MODEL_REPO / BIGOPEN_MODEL_FILE and redeploy).
+
+x-server: &server
+  restart: unless-stopped
+  ports:
+    - "8080:8080"
+  environment:
+    LLAMA_ARG_CTX_SIZE: ${BIGOPEN_CTX_SIZE:-8192}
+    LLAMA_ARG_N_PARALLEL: ${BIGOPEN_PARALLEL:-1}
+    LLAMA_ARG_TOOLS: all
+    LLAMA_ARG_AGENT: "true"
+    LLAMA_ARG_UI_MCP_PROXY: "true"
+  command: ["--models-dir", "/models"]
+  volumes:
+    - bigopen_models:/models:ro
+  depends_on:
+    model-init:
+      condition: service_completed_successfully
+
+services:
+  model-init:
+    image: curlimages/curl:latest
+    user: "0"
+    restart: "no"
+    labels:
+      # Not used by Docker: it just makes the hardware choice a field in the
+      # install form. Docker itself reads COMPOSE_PROFILES from the .env file.
+      bigopen.hardware: ${COMPOSE_PROFILES:-cpu}
+    environment:
+      MODEL_REPO: ${BIGOPEN_MODEL_REPO:-bartowski/Llama-3.2-3B-Instruct-GGUF}
+      MODEL_FILE: ${BIGOPEN_MODEL_FILE:-Llama-3.2-3B-Instruct-Q4_K_M.gguf}
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - bigopen_models:/models
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        dest="/models/$$MODEL_FILE"
+        if [ -s "$$dest" ]; then
+          echo "Model already downloaded: $$MODEL_FILE"
+          exit 0
+        fi
+        url="https://huggingface.co/$$MODEL_REPO/resolve/main/$$MODEL_FILE"
+        echo "Downloading $$MODEL_FILE from $$MODEL_REPO (this can take a while)..."
+        if [ -n "$$HF_TOKEN" ]; then
+          curl -fL --retry 5 --retry-delay 5 -C - -H "Authorization: Bearer $$HF_TOKEN" -o "$$dest.part" "$$url"
+        else
+          curl -fL --retry 5 --retry-delay 5 -C - -o "$$dest.part" "$$url"
+        fi
+        mv "$$dest.part" "$$dest"
+        echo "Model ready: $$MODEL_FILE"
+
+  bigopen-server:
+    <<: *server
+    image: ghcr.io/ggml-org/llama.cpp:server
+    profiles: ["cpu"]
+
+  bigopen-server-gpu:
+    <<: *server
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    profiles: ["gpu"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  bigopen_models:
