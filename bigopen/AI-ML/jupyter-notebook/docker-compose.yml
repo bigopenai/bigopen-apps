@@ -4,12 +4,22 @@ services:
     restart: unless-stopped
     ports:
       - "8888:8888"
+    # Start as root so the image's entrypoint can remap the notebook user to
+    # bigopen-user's uid/gid and chown the mounted folder; it then drops
+    # privileges, so Jupyter itself does not run as root. Files and projects
+    # created in Jupyter therefore belong to bigopen-user on the host.
+    # Set BIGOPEN_UID / BIGOPEN_GID to `id -u/-g bigopen-user` if they are
+    # not 1001.
+    user: root
     environment:
       JUPYTER_TOKEN: ${JUPYTER_TOKEN:-change-this-jupyter-token}
+      NB_UID: ${BIGOPEN_UID:-1001}
+      NB_GID: ${BIGOPEN_GID:-1001}
+      CHOWN_EXTRA: /home/jovyan/work
+      CHOWN_EXTRA_OPTS: -R
     volumes:
-      - jupyter_notebook_data:/home/jovyan/work
+      # Host folder, so bigopen-user can see everything Jupyter creates.
+      # Docker creates it on first start if it does not exist yet.
+      - /home/bigopen-user/jupiternotebook:/home/jovyan/work
     mem_limit: 2g
     cpus: 1.0
-
-volumes:
-  jupyter_notebook_data:
