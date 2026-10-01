@@ -8,8 +8,8 @@ services:
     # bigopen-user's uid/gid and chown the mounted folder; it then drops
     # privileges, so Jupyter itself does not run as root. Files and projects
     # created in Jupyter therefore belong to bigopen-user on the host.
-    # Set BIGOPEN_UID / BIGOPEN_GID to `id -u/-g bigopen-user` if they are
-    # not 1001.
+    # Set BIGOPEN_UID / BIGOPEN_GID to `id -u bigopen-user` / `id -g bigopen-user`
+    # if they are not 1001 (on macOS: 502 and 20).
     user: root
     environment:
       JUPYTER_TOKEN: ${JUPYTER_TOKEN:-change-this-jupyter-token}
@@ -20,6 +20,9 @@ services:
     volumes:
       # Host folder, so bigopen-user can see everything Jupyter creates.
       # Docker creates it on first start if it does not exist yet.
-      - /home/bigopen-user/jupiternotebook:/home/jovyan/work
+      # Linux default shown; bigopen-user's home is /Users/bigopen-user on macOS,
+      # so set JUPYTER_WORK_DIR=/Users/bigopen-user/jupiternotebook there
+      # (Docker Desktop shares /Users by default).
+      - ${JUPYTER_WORK_DIR:-/home/bigopen-user/jupiternotebook}:/home/jovyan/work
     mem_limit: 2g
     cpus: 1.0
