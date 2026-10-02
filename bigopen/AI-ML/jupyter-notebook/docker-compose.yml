@@ -6,23 +6,26 @@ services:
       - "8888:8888"
     # Start as root so the image's entrypoint can remap the notebook user to
     # bigopen-user's uid/gid and chown the mounted folder; it then drops
-    # privileges, so Jupyter itself does not run as root. Files and projects
-    # created in Jupyter therefore belong to bigopen-user on the host.
-    # Set BIGOPEN_UID / BIGOPEN_GID to `id -u bigopen-user` / `id -g bigopen-user`
-    # if they are not 1001 (on macOS: 502 and 20).
+    # privileges, so Jupyter itself does not run as root.
     user: root
     environment:
       JUPYTER_TOKEN: ${JUPYTER_TOKEN:-change-this-jupyter-token}
-      NB_UID: ${BIGOPEN_UID:-1001}
-      NB_GID: ${BIGOPEN_GID:-1001}
+      # The BigOpen agent sets BIGOPEN_UID / BIGOPEN_GID from the bigopen-user
+      # account on Linux and macOS. Without them (Windows, or running this file
+      # by hand) the image's default notebook user is kept.
+      NB_UID: ${BIGOPEN_UID:-1000}
+      NB_GID: ${BIGOPEN_GID:-100}
       CHOWN_EXTRA: /home/jovyan/work
       CHOWN_EXTRA_OPTS: -R
     volumes:
-      # Host folder, so bigopen-user can see everything Jupyter creates.
-      # Docker creates it on first start if it does not exist yet.
-      # Linux default shown; bigopen-user's home is /Users/bigopen-user on macOS,
-      # so set JUPYTER_WORK_DIR=/Users/bigopen-user/jupiternotebook there
-      # (Docker Desktop shares /Users by default).
-      - ${JUPYTER_WORK_DIR:-/home/bigopen-user/jupiternotebook}:/home/jovyan/work
+      # Notebooks and projects live in <bigopen-user home>/jupiternotebook:
+      #   Linux   /home/bigopen-user/jupiternotebook
+      #   macOS   /Users/bigopen-user/jupiternotebook
+      # The agent provides BIGOPEN_USER_HOME. Where there is no bigopen-user
+      # (Windows) or the variable is unset, the folder is created next to this
+      # compose file instead. Set JUPYTER_WORK_DIR to choose any other folder.
+      # (No leading "./" here on purpose: a relative path is resolved by
+      # docker compose against this file's folder on every OS.)
+      - ${JUPYTER_WORK_DIR:-${BIGOPEN_USER_HOME:-.}/jupiternotebook}:/home/jovyan/work
     mem_limit: 2g
     cpus: 1.0
