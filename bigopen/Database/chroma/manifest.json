@@ -1,0 +1,9 @@
+{
+  "id": "chroma",
+  "name": "ChromaDB",
+  "description": "An Open Source VectorDB.",
+  "category": "Database",
+  "version": "1.0.0",
+  "application_port": "8000",
+  "compose_file": "docker-compose.yml"
+}
