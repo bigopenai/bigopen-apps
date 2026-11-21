@@ -1,9 +1,9 @@
 {
   "id": "bigopen-server",
   "name": "BigOpen Server (LLM Inference)",
-  "description": "Runs the llama.cpp inference server in Docker (CPU, or an NVIDIA GPU) with an OpenAI-compatible API. Downloads your chosen model from Hugging Face on first start.",
+  "description": "Runs the BigOpen chat UI and the llama.cpp inference server in one Docker image (x86-64 or ARM64; CPU, or an NVIDIA GPU) with an OpenAI-compatible API. Downloads your chosen model from Hugging Face on first start.",
   "category": "AI-ML",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "application_port": "8080",
   "compose_file": "docker-compose.yml"
 }

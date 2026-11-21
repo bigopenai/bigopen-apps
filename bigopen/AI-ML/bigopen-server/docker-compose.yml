@@ -1,15 +1,25 @@
-# BigOpen Server: llama.cpp's llama-server, run in Docker (same on Linux, macOS
-# and Windows - nothing OS-specific to install).
+# BigOpen Server: the BigOpen chat UI and llama.cpp's llama-server in one image,
+# built by bigopenai/bigopen-inference and published to ECR as bigopen/bo-inference.
+# Same compose file on Linux, macOS and Windows - nothing OS-specific to install.
 #
 #   model-init          downloads the model from Hugging Face into a volume (once)
 #   bigopen-server      the server on CPU        (COMPOSE_PROFILES=cpu, the default)
 #   bigopen-server-gpu  the server on an NVIDIA GPU (COMPOSE_PROFILES=gpu; needs the
 #                       NVIDIA Container Toolkit, or Docker Desktop on Windows)
 #
+# Hardware and OS: every image tag is a multi-arch manifest, so Docker pulls the
+# build that matches this host by itself: x86-64 or ARM64 (Apple Silicon, Graviton,
+# Ampere), and for the GPU profile CUDA 12 on x86-64 or CUDA 13 on ARM64 (DGX Spark).
+# Docker on macOS runs Linux in a VM that cannot use the Apple GPU, so a Mac runs the
+# CPU profile. Only the CPU-or-NVIDIA choice is a setting (COMPOSE_PROFILES below).
+#
 # Every variable with a default value below shows up as a setting in the install
 # form (so keep dollar-brace text out of comments: the form reads them too).
 # To serve another model later, put its .gguf file in the bigopen_models volume
 # (or change BIGOPEN_MODEL_REPO / BIGOPEN_MODEL_FILE and redeploy).
+#
+# The image is a private ECR repository: BIGOPEN_IMAGE is where it is pulled from, and
+# BIGOPEN_VERSION is the release tag (tags are immutable, so each release is a new one).
 
 x-server: &server
   restart: unless-stopped
@@ -80,12 +90,12 @@ services:
 
   bigopen-server:
     <<: *server
-    image: ghcr.io/ggml-org/llama.cpp:server
+    image: ${BIGOPEN_IMAGE:-971235501174.dkr.ecr.us-east-1.amazonaws.com/bigopen/bo-inference}:${BIGOPEN_VERSION:-v1.0.2}
     profiles: ["cpu"]
 
   bigopen-server-gpu:
     <<: *server
-    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    image: ${BIGOPEN_IMAGE:-971235501174.dkr.ecr.us-east-1.amazonaws.com/bigopen/bo-inference}:${BIGOPEN_VERSION:-v1.0.2}-cuda
     profiles: ["gpu"]
     deploy:
       resources:
