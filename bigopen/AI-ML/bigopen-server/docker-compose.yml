@@ -40,6 +40,9 @@ x-backend: &backend
   # No -m and no --models-dir: router mode. The server lists every model in its cache
   # (LLAMA_CACHE) and loads each one when it is asked for. --no-ui: API only.
   command: ["--no-ui"]
+  depends_on:
+    model-init:
+      condition: service_completed_successfully
   healthcheck:
     test: ["CMD", "curl", "-fs", "http://localhost:8080/health"]
     interval: 15s
@@ -60,6 +63,57 @@ x-nvidia: &nvidia
             capabilities: [gpu]
 
 services:
+  # Puts the default model in the models folder before the backend starts. Skipped when
+  # the file is already there; set LLM_DEFAULT_MODEL_FILE to an empty value to turn it off.
+  model-init:
+    image: curlimages/curl:8.11.1
+    user: root
+    restart: "no"
+    environment:
+      MODEL_REPO: ${LLM_DEFAULT_MODEL_REPO:-Qwen/Qwen2.5-0.5B-Instruct-GGUF}
+      MODEL_FILE: ${LLM_DEFAULT_MODEL_FILE:-qwen2.5-0.5b-instruct-q4_k_m.gguf}
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - ${LLM_MODELS_DIR:-${BIGOPEN_USER_HOME:-${HOME}}/.bigopen/models}:/models
+    entrypoint:
+      - sh
+      - -c
+      - |
+        [ -z "$$MODEL_FILE" ] && exit 0
+        dir=/models/models--$$(echo "$$MODEL_REPO" | sed 's|/|--|')/snapshots/main
+        dest="$$dir/$$MODEL_FILE"
+        if [ -s "$$dest" ]; then
+          echo "Model already downloaded: $$MODEL_FILE"
+          exit 0
+        fi
+        mkdir -p "$$dir"
+        url="https://huggingface.co/$$MODEL_REPO/resolve/main/$$MODEL_FILE"
+        echo "Downloading $$MODEL_FILE from $$MODEL_REPO (this can take a while)..."
+        attempt=1
+        while [ "$$attempt" -le 5 ]; do
+          if [ -n "$$HF_TOKEN" ]; then
+            curl -fsSL -C - -H "Authorization: Bearer $$HF_TOKEN" -o "$$dest.part" "$$url" &
+          else
+            curl -fsSL -C - -o "$$dest.part" "$$url" &
+          fi
+          pid=$$!
+          # One readable line every few seconds instead of curl's redrawing meter.
+          while kill -0 "$$pid" 2>/dev/null; do
+            sleep 5
+            echo "  downloaded so far: $$(du -h "$$dest.part" 2>/dev/null | cut -f1)"
+          done
+          if wait "$$pid"; then
+            mv "$$dest.part" "$$dest"
+            echo "Model ready: $$MODEL_FILE"
+            exit 0
+          fi
+          echo "Download attempt $$attempt failed, retrying in 5s..."
+          attempt=$$((attempt + 1))
+          sleep 5
+        done
+        echo "Could not download $$MODEL_FILE from $$MODEL_REPO. Check the repo and file name (and HF_TOKEN for gated models)."
+        exit 1
+
   backend-cpu:
     <<: *backend
     image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp}:${LLAMACPP_TAG:-server}
