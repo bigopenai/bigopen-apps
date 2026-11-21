@@ -25,6 +25,7 @@ x-backend: &backend
     LLAMA_ARG_MODELS_MAX: ${LLM_MODELS_MAX:-1}
     LLAMA_ARG_FLASH_ATTN: ${LLM_FLASH_ATTN:-auto}
     LLAMA_API_KEY: ${LLM_API_KEY:-}
+    LLAMA_ARG_CORS_ORIGINS: ${LLM_CORS_ORIGINS:-*}
     HF_TOKEN: ${HF_TOKEN:-}
     # Ignored by the CPU image; offloads everything to the GPU in the gpu profile.
     LLAMA_ARG_N_GPU_LAYERS: ${LLM_GPU_LAYERS:-all}
