@@ -1,102 +1,56 @@
-# BigOpen Server: the BigOpen chat UI and llama.cpp's llama-server in one image,
-# built by bigopenai/bigopen-inference and published to ECR as bigopen/bo-inference.
-# Same compose file on Linux, macOS and Windows - nothing OS-specific to install.
+# Llama.cpp Server: the official llama.cpp server plus the BigOpen chat UI.
 #
-#   model-init          downloads the model from Hugging Face into a volume (once)
-#   bigopen-server      the server on CPU        (COMPOSE_PROFILES=cpu, the default)
-#   bigopen-server-gpu  the server on an NVIDIA GPU (COMPOSE_PROFILES=gpu; needs the
-#                       NVIDIA Container Toolkit, or Docker Desktop on Windows)
+#   backend   the official llama.cpp server image, in router mode. Models are
+#             downloaded from Hugging Face on demand (from the UI) and kept in the
+#             llamacpp_data volume, so a restart or an update keeps them.
+#   frontend  nginx serving the BigOpen UI and passing API calls to the backend.
 #
-# Hardware and OS: every image tag is a multi-arch manifest, so Docker pulls the
-# build that matches this host by itself: x86-64 or ARM64 (Apple Silicon, Graviton,
-# Ampere), and for the GPU profile CUDA 12 on x86-64 or CUDA 13 on ARM64 (DGX Spark).
-# Docker on macOS runs Linux in a VM that cannot use the Apple GPU, so a Mac runs the
-# CPU profile. Only the CPU-or-NVIDIA choice is a setting (COMPOSE_PROFILES below).
+# Hardware is the COMPOSE_PROFILES setting: cpu (default) or gpu for an NVIDIA GPU
+# (needs the NVIDIA Container Toolkit, or Docker Desktop on Windows). Every image is
+# multi-arch (x86-64 and ARM64). Docker on macOS cannot reach the Apple GPU, so a Mac
+# runs cpu. The first model is downloaded from the UI (Download a model).
+# Built-in agent tools stay off: they can run commands on this machine.
 #
-# Every variable with a default value below shows up as a setting in the install
-# form (so keep dollar-brace text out of comments: the form reads them too).
-# To serve another model later, put its .gguf file in the bigopen_models volume
-# (or change BIGOPEN_MODEL_REPO / BIGOPEN_MODEL_FILE and redeploy).
-#
-# The image is on GitHub Container Registry (also mirrored in ECR as bigopen/bo-inference): BIGOPEN_IMAGE is where it is pulled from, and
-# BIGOPEN_VERSION is the release tag (tags are immutable, so each release is a new one).
+# Every variable with a default below shows up as a setting in the install form,
+# so keep placeholder text out of comments.
 
-x-server: &server
+x-backend: &backend
   restart: unless-stopped
-  ports:
-    - "8080:8080"
   environment:
-    LLAMA_ARG_CTX_SIZE: ${BIGOPEN_CTX_SIZE:-8192}
-    LLAMA_ARG_N_PARALLEL: ${BIGOPEN_PARALLEL:-1}
-    LLAMA_ARG_TOOLS: all
-    LLAMA_ARG_AGENT: "true"
-    LLAMA_ARG_UI_MCP_PROXY: "true"
-    LLAMA_ARG_CORS_ORIGINS: ${BIGOPEN_CORS_ORIGINS:-*}
-  command: ["--models-dir", "/models"]
+    LLAMA_ARG_HOST: 0.0.0.0
+    LLAMA_ARG_PORT: "8080"
+    LLAMA_CACHE: /data
+    LLAMA_ARG_CTX_SIZE: ${LLM_CTX_SIZE:-8192}
+    LLAMA_ARG_N_PARALLEL: ${LLM_PARALLEL:-1}
+    LLAMA_ARG_MODELS_MAX: ${LLM_MODELS_MAX:-1}
+    LLAMA_ARG_FLASH_ATTN: ${LLM_FLASH_ATTN:-auto}
+    LLAMA_API_KEY: ${LLM_API_KEY:-}
+    HF_TOKEN: ${HF_TOKEN:-}
+    # Ignored by the CPU image; offloads everything to the GPU in the gpu profile.
+    LLAMA_ARG_N_GPU_LAYERS: ${LLM_GPU_LAYERS:-all}
   volumes:
-    - bigopen_models:/models:ro
-  depends_on:
-    model-init:
-      condition: service_completed_successfully
+    - llamacpp_data:/data
+  # No -m and no --models-dir: router mode. The server lists every model in its cache
+  # (LLAMA_CACHE) and loads each one when it is asked for.
+  healthcheck:
+    test: ["CMD", "curl", "-fs", "http://localhost:8080/health"]
+    interval: 15s
+    timeout: 5s
+    start_period: 20s
+    retries: 5
+  networks:
+    default:
+      aliases: [backend]
 
 services:
-  model-init:
-    image: curlimages/curl:latest
-    user: "0"
-    restart: "no"
-    labels:
-      # Not used by Docker: it just makes the hardware choice a field in the
-      # install form. Docker itself reads COMPOSE_PROFILES from the .env file.
-      bigopen.hardware: ${COMPOSE_PROFILES:-cpu}
-    environment:
-      MODEL_REPO: ${BIGOPEN_MODEL_REPO:-Qwen/Qwen2.5-0.5B-Instruct-GGUF}
-      MODEL_FILE: ${BIGOPEN_MODEL_FILE:-qwen2.5-0.5b-instruct-q4_k_m.gguf}
-      HF_TOKEN: ${HF_TOKEN:-}
-    volumes:
-      - bigopen_models:/models
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        dest="/models/$$MODEL_FILE"
-        if [ -s "$$dest" ]; then
-          echo "Model already downloaded: $$MODEL_FILE"
-          exit 0
-        fi
-        url="https://huggingface.co/$$MODEL_REPO/resolve/main/$$MODEL_FILE"
-        echo "Downloading $$MODEL_FILE from $$MODEL_REPO (this can take a while)..."
-        attempt=1
-        while [ "$$attempt" -le 5 ]; do
-          if [ -n "$$HF_TOKEN" ]; then
-            curl -fsSL -C - -H "Authorization: Bearer $$HF_TOKEN" -o "$$dest.part" "$$url" &
-          else
-            curl -fsSL -C - -o "$$dest.part" "$$url" &
-          fi
-          pid=$$!
-          # One readable line every few seconds instead of curl's redrawing meter.
-          while kill -0 "$$pid" 2>/dev/null; do
-            sleep 5
-            echo "  downloaded so far: $$(du -h "$$dest.part" 2>/dev/null | cut -f1)"
-          done
-          if wait "$$pid"; then
-            mv "$$dest.part" "$$dest"
-            echo "Model ready: $$MODEL_FILE"
-            exit 0
-          fi
-          echo "Download attempt $$attempt failed, retrying in 5s..."
-          attempt=$$((attempt + 1))
-          sleep 5
-        done
-        echo "Could not download $$MODEL_FILE from $$MODEL_REPO. Check the repo and file name (and HF_TOKEN for gated models)."
-        exit 1
-
-  bigopen-server:
-    <<: *server
-    image: ${BIGOPEN_IMAGE:-ghcr.io/bigopenai/bo-inference}:${BIGOPEN_VERSION:-v1.0.2}
+  backend-cpu:
+    <<: *backend
+    image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp}:${LLAMACPP_TAG:-server}
     profiles: ["cpu"]
 
-  bigopen-server-gpu:
-    <<: *server
-    image: ${BIGOPEN_IMAGE:-ghcr.io/bigopenai/bo-inference}:${BIGOPEN_VERSION:-v1.0.2}-cuda
+  backend-gpu:
+    <<: *backend
+    image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp}:${LLAMACPP_GPU_TAG:-server-cuda}
     profiles: ["gpu"]
     deploy:
       resources:
@@ -106,5 +60,17 @@ services:
               count: all
               capabilities: [gpu]
 
+  frontend:
+    image: ${BIGOPEN_FRONTEND_IMAGE:-ghcr.io/bigopenai/bo-inference-frontend}:${BIGOPEN_FRONTEND_VERSION:-1.0.0}
+    labels:
+      # Not used by Docker: it only makes the hardware choice a field in the install
+      # form. Docker itself reads COMPOSE_PROFILES from the .env file.
+      bigopen.hardware: ${COMPOSE_PROFILES:-cpu}
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
 volumes:
-  bigopen_models:
+  llamacpp_data:
