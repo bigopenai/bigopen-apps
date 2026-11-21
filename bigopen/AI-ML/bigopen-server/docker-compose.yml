@@ -18,7 +18,7 @@
 # To serve another model later, put its .gguf file in the bigopen_models volume
 # (or change BIGOPEN_MODEL_REPO / BIGOPEN_MODEL_FILE and redeploy).
 #
-# The image is a private ECR repository: BIGOPEN_IMAGE is where it is pulled from, and
+# The image is on GitHub Container Registry (also mirrored in ECR as bigopen/bo-inference): BIGOPEN_IMAGE is where it is pulled from, and
 # BIGOPEN_VERSION is the release tag (tags are immutable, so each release is a new one).
 
 x-server: &server
@@ -90,12 +90,12 @@ services:
 
   bigopen-server:
     <<: *server
-    image: ${BIGOPEN_IMAGE:-971235501174.dkr.ecr.us-east-1.amazonaws.com/bigopen/bo-inference}:${BIGOPEN_VERSION:-v1.0.2}
+    image: ${BIGOPEN_IMAGE:-ghcr.io/bigopenai/bo-inference}:${BIGOPEN_VERSION:-v1.0.2}
     profiles: ["cpu"]
 
   bigopen-server-gpu:
     <<: *server
-    image: ${BIGOPEN_IMAGE:-971235501174.dkr.ecr.us-east-1.amazonaws.com/bigopen/bo-inference}:${BIGOPEN_VERSION:-v1.0.2}-cuda
+    image: ${BIGOPEN_IMAGE:-ghcr.io/bigopenai/bo-inference}:${BIGOPEN_VERSION:-v1.0.2}-cuda
     profiles: ["gpu"]
     deploy:
       resources:
