@@ -5,5 +5,6 @@
   "category": "AI-ML",
   "version": "3.1.0",
   "application_port": "8080",
+  "license": "MIT",
   "compose_file": "docker-compose.yml"
 }
