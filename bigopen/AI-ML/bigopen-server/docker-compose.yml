@@ -80,7 +80,15 @@ services:
       - -c
       - |
         [ -z "$$MODEL_FILE" ] && exit 0
-        dir=/models/models--$$(echo "$$MODEL_REPO" | sed 's|/|--|')/snapshots/main
+        repo=/models/models--$$(echo "$$MODEL_REPO" | sed 's|/|--|')
+        # The server resolves snapshots through refs/main, so use the commit it points to.
+        rev=$$(cat "$$repo/refs/main" 2>/dev/null)
+        if [ -z "$$rev" ]; then
+          rev=main
+          mkdir -p "$$repo/refs"
+          printf main > "$$repo/refs/main"
+        fi
+        dir="$$repo/snapshots/$$rev"
         dest="$$dir/$$MODEL_FILE"
         if [ -s "$$dest" ]; then
           echo "Model already downloaded: $$MODEL_FILE"
