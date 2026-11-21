@@ -31,7 +31,7 @@ x-server: &server
     LLAMA_ARG_TOOLS: all
     LLAMA_ARG_AGENT: "true"
     LLAMA_ARG_UI_MCP_PROXY: "true"
-    LLAMA_ARG_CORS_ORIGINS: ${BIGOPEN_CORS_ORIGINS:-localhost}
+    LLAMA_ARG_CORS_ORIGINS: ${BIGOPEN_CORS_ORIGINS:-*}
   command: ["--models-dir", "/models"]
   volumes:
     - bigopen_models:/models:ro
