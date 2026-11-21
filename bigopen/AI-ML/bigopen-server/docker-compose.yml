@@ -103,7 +103,7 @@ services:
     group_add: [video]
 
   frontend:
-    image: ${BIGOPEN_FRONTEND_IMAGE:-ghcr.io/bigopenai/bo-inference-frontend}:${BIGOPEN_FRONTEND_VERSION:-1.1.0}
+    image: ${BIGOPEN_FRONTEND_IMAGE:-ghcr.io/bigopenai/bo-inference-frontend}:${BIGOPEN_FRONTEND_VERSION:-latest}
     labels:
       # Not used by Docker: it only makes the hardware choice a field in the install
       # form. Docker itself reads COMPOSE_PROFILES from the .env file.
