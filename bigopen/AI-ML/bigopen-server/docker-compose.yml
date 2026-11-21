@@ -2,12 +2,14 @@
 #
 #   backend   the official llama.cpp server image, in router mode. Models are
 #             downloaded from Hugging Face on demand (from the UI) and kept in the
-#             llamacpp_data volume, so a restart or an update keeps them.
+#             .bigopen/models folder in the user home, so a restart or an update
+#             keeps them.
 #   frontend  nginx serving the BigOpen UI and passing API calls to the backend.
 #
-# Hardware is the COMPOSE_PROFILES setting: cpu (default) or gpu for an NVIDIA GPU
-# (needs the NVIDIA Container Toolkit, or Docker Desktop on Windows). Every image is
-# multi-arch (x86-64 and ARM64). Docker on macOS cannot reach the Apple GPU, so a Mac
+# Hardware is the COMPOSE_PROFILES setting: cpu (default), gpu (NVIDIA CUDA 12),
+# cuda13 (NVIDIA CUDA 13, e.g. DGX Spark), amd (ROCm), vulkan or intel. NVIDIA needs the
+# NVIDIA Container Toolkit (or Docker Desktop on Windows); amd, vulkan and intel need
+# Linux with /dev/dri. Every image is multi-arch where upstream publishes it. Docker on macOS cannot reach the Apple GPU, so a Mac
 # runs cpu. The first model is downloaded from the UI (Download a model).
 # Built-in agent tools stay off: they can run commands on this machine.
 #
@@ -19,7 +21,8 @@ x-backend: &backend
   environment:
     LLAMA_ARG_HOST: 0.0.0.0
     LLAMA_ARG_PORT: "8080"
-    LLAMA_CACHE: /data
+    LLAMA_ARG_UI: "false"
+    LLAMA_CACHE: /root/.cache/models
     LLAMA_ARG_CTX_SIZE: ${LLM_CTX_SIZE:-8192}
     LLAMA_ARG_N_PARALLEL: ${LLM_PARALLEL:-1}
     LLAMA_ARG_MODELS_MAX: ${LLM_MODELS_MAX:-1}
@@ -30,9 +33,13 @@ x-backend: &backend
     # Ignored by the CPU image; offloads everything to the GPU in the gpu profile.
     LLAMA_ARG_N_GPU_LAYERS: ${LLM_GPU_LAYERS:-all}
   volumes:
-    - llamacpp_data:/data
+    # Models live in <bigopen-user home>/.bigopen/models. The agent provides
+    # BIGOPEN_USER_HOME; where it is unset the home of the user running compose is used.
+    # Set LLM_MODELS_DIR to choose any other folder.
+    - ${LLM_MODELS_DIR:-${BIGOPEN_USER_HOME:-${HOME}}/.bigopen/models}:/root/.cache/models
   # No -m and no --models-dir: router mode. The server lists every model in its cache
-  # (LLAMA_CACHE) and loads each one when it is asked for.
+  # (LLAMA_CACHE) and loads each one when it is asked for. --no-ui: API only.
+  command: ["--no-ui"]
   healthcheck:
     test: ["CMD", "curl", "-fs", "http://localhost:8080/health"]
     interval: 15s
@@ -43,6 +50,15 @@ x-backend: &backend
     default:
       aliases: [backend]
 
+x-nvidia: &nvidia
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
 services:
   backend-cpu:
     <<: *backend
@@ -50,16 +66,41 @@ services:
     profiles: ["cpu"]
 
   backend-gpu:
-    <<: *backend
+    <<: [*backend, *nvidia]
     image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp}:${LLAMACPP_GPU_TAG:-server-cuda}
     profiles: ["gpu"]
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+
+  backend-cuda13:
+    <<: [*backend, *nvidia]
+    image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp}:${LLAMACPP_CUDA13_TAG:-server-cuda13}
+    profiles: ["cuda13"]
+
+  backend-amd:
+    <<: *backend
+    image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp}:${LLAMACPP_AMD_TAG:-server-rocm}
+    profiles: ["amd"]
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add: [video]
+    security_opt:
+      - seccomp=unconfined
+
+  backend-vulkan:
+    <<: *backend
+    image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp}:${LLAMACPP_VULKAN_TAG:-server-vulkan}
+    profiles: ["vulkan"]
+    devices:
+      - /dev/dri
+    group_add: [video]
+
+  backend-intel:
+    <<: *backend
+    image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp}:${LLAMACPP_INTEL_TAG:-server-intel}
+    profiles: ["intel"]
+    devices:
+      - /dev/dri
+    group_add: [video]
 
   frontend:
     image: ${BIGOPEN_FRONTEND_IMAGE:-ghcr.io/bigopenai/bo-inference-frontend}:${BIGOPEN_FRONTEND_VERSION:-1.1.0}
@@ -72,6 +113,3 @@ services:
       BACKEND_URL: http://backend:8080
     ports:
       - "${FRONTEND_PORT:-8080}:80"
-
-volumes:
-  llamacpp_data:
