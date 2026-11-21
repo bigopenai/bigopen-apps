@@ -49,8 +49,8 @@ services:
       # install form. Docker itself reads COMPOSE_PROFILES from the .env file.
       bigopen.hardware: ${COMPOSE_PROFILES:-cpu}
     environment:
-      MODEL_REPO: ${BIGOPEN_MODEL_REPO:-bartowski/Llama-3.2-3B-Instruct-GGUF}
-      MODEL_FILE: ${BIGOPEN_MODEL_FILE:-Llama-3.2-3B-Instruct-Q4_K_M.gguf}
+      MODEL_REPO: ${BIGOPEN_MODEL_REPO:-Qwen/Qwen2.5-0.5B-Instruct-GGUF}
+      MODEL_FILE: ${BIGOPEN_MODEL_FILE:-qwen2.5-0.5b-instruct-q4_k_m.gguf}
       HF_TOKEN: ${HF_TOKEN:-}
     volumes:
       - bigopen_models:/models
