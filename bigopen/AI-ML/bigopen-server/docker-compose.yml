@@ -1,62 +1,92 @@
-# BigOpen Server: an LLM inference server with a chat UI, in one container.
-# Open the app, go to Models, search Hugging Face and download a model; it is
-# kept in the bigopen_data volume, so it survives restarts and redeploys.
-# Web search (Exa) is built into the UI. Images: ghcr.io/bigopenai/bigopen-server
+# BigOpen Server: llama.cpp's llama-server, run in Docker (same on Linux, macOS
+# and Windows - nothing OS-specific to install).
 #
-# Pick the hardware with COMPOSE_PROFILES (the Hardware field of the install form):
-#   cpu     any machine (default)
-#   cuda    an NVIDIA GPU (needs the NVIDIA Container Toolkit, or Docker Desktop on Windows)
-#   vulkan  an AMD or Intel GPU on Linux (needs /dev/dri; set GPU_GROUP_ID, see below)
-# By hand:  docker compose --profile cuda up -d   (with no profile nothing starts)
+#   model-init          downloads the model from Hugging Face into a volume (once)
+#   bigopen-server      the server on CPU        (COMPOSE_PROFILES=cpu, the default)
+#   bigopen-server-gpu  the server on an NVIDIA GPU (COMPOSE_PROFILES=gpu; needs the
+#                       NVIDIA Container Toolkit, or Docker Desktop on Windows)
 #
 # Every variable with a default value below shows up as a setting in the install
 # form (so keep dollar-brace text out of comments: the form reads them too).
-#   LLM_CTX_SIZE      context window in tokens, per model (more = more memory; web search results
-#                     alone can use 5000, so keep this at 16384 or more)
-#   LLM_PARALLEL      requests served at the same time (the context is split between them)
-#   LLM_MODELS_MAX    models kept loaded at once; the least recently used one is unloaded
-#   LLM_THREADS       CPU threads, -1 = all cores (do not leave it empty)
-#   LLM_FLASH_ATTN    auto, on or off
-#   LLM_GPU_LAYERS    model layers put on the GPU (cuda and vulkan only): all, or a number, 0 = none
-#   LLM_API_KEY       when set, the UI and the API ask for this key (leave empty for no key)
-#   GPU_GROUP_ID      vulkan only: numeric group id of /dev/dri/renderD128 on the host
-#                     (find it with: stat -c %g /dev/dri/renderD128)
-#   HF_TOKEN          Hugging Face token, only for gated models; read when the server starts
-# Server-side tools are left off on purpose: the server refuses to start with them on a
-# public address unless an API key is set, and they can run commands on the host.
+# To serve another model later, put its .gguf file in the bigopen_models volume
+# (or change BIGOPEN_MODEL_REPO / BIGOPEN_MODEL_FILE and redeploy).
 
 x-server: &server
   restart: unless-stopped
   ports:
     - "8080:8080"
-  labels:
-    # Not used by Docker: it just makes the hardware choice a field in the
-    # install form. Docker itself reads COMPOSE_PROFILES from the .env file.
-    bigopen.hardware: ${COMPOSE_PROFILES:-cpu}
-  environment: &env
-    LLAMA_ARG_CTX_SIZE: ${LLM_CTX_SIZE:-16384}
-    LLAMA_ARG_N_PARALLEL: ${LLM_PARALLEL:-1}
-    LLAMA_ARG_MODELS_MAX: ${LLM_MODELS_MAX:-1}
-    LLAMA_ARG_THREADS: ${LLM_THREADS:--1}
-    LLAMA_ARG_FLASH_ATTN: ${LLM_FLASH_ATTN:-auto}
-    LLAMA_API_KEY: ${LLM_API_KEY:-}
-    HF_TOKEN: ${HF_TOKEN:-}
+  environment:
+    LLAMA_ARG_CTX_SIZE: ${BIGOPEN_CTX_SIZE:-8192}
+    LLAMA_ARG_N_PARALLEL: ${BIGOPEN_PARALLEL:-1}
+    LLAMA_ARG_TOOLS: all
+    LLAMA_ARG_AGENT: "true"
+    LLAMA_ARG_UI_MCP_PROXY: "true"
+  command: ["--models-dir", "/models"]
   volumes:
-    - bigopen_data:/data
+    - bigopen_models:/models:ro
+  depends_on:
+    model-init:
+      condition: service_completed_successfully
 
 services:
+  model-init:
+    image: curlimages/curl:latest
+    user: "0"
+    restart: "no"
+    labels:
+      # Not used by Docker: it just makes the hardware choice a field in the
+      # install form. Docker itself reads COMPOSE_PROFILES from the .env file.
+      bigopen.hardware: ${COMPOSE_PROFILES:-cpu}
+    environment:
+      MODEL_REPO: ${BIGOPEN_MODEL_REPO:-bartowski/Llama-3.2-3B-Instruct-GGUF}
+      MODEL_FILE: ${BIGOPEN_MODEL_FILE:-Llama-3.2-3B-Instruct-Q4_K_M.gguf}
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - bigopen_models:/models
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        dest="/models/$$MODEL_FILE"
+        if [ -s "$$dest" ]; then
+          echo "Model already downloaded: $$MODEL_FILE"
+          exit 0
+        fi
+        url="https://huggingface.co/$$MODEL_REPO/resolve/main/$$MODEL_FILE"
+        echo "Downloading $$MODEL_FILE from $$MODEL_REPO (this can take a while)..."
+        attempt=1
+        while [ "$$attempt" -le 5 ]; do
+          if [ -n "$$HF_TOKEN" ]; then
+            curl -fsSL -C - -H "Authorization: Bearer $$HF_TOKEN" -o "$$dest.part" "$$url" &
+          else
+            curl -fsSL -C - -o "$$dest.part" "$$url" &
+          fi
+          pid=$$!
+          # One readable line every few seconds instead of curl's redrawing meter.
+          while kill -0 "$$pid" 2>/dev/null; do
+            sleep 5
+            echo "  downloaded so far: $$(du -h "$$dest.part" 2>/dev/null | cut -f1)"
+          done
+          if wait "$$pid"; then
+            mv "$$dest.part" "$$dest"
+            echo "Model ready: $$MODEL_FILE"
+            exit 0
+          fi
+          echo "Download attempt $$attempt failed, retrying in 5s..."
+          attempt=$$((attempt + 1))
+          sleep 5
+        done
+        echo "Could not download $$MODEL_FILE from $$MODEL_REPO. Check the repo and file name (and HF_TOKEN for gated models)."
+        exit 1
+
   bigopen-server:
     <<: *server
-    image: ghcr.io/bigopenai/bigopen-server:latest
+    image: ghcr.io/ggml-org/llama.cpp:server
     profiles: ["cpu"]
 
-  bigopen-server-cuda:
+  bigopen-server-gpu:
     <<: *server
-    image: ghcr.io/bigopenai/bigopen-server:cuda
-    profiles: ["cuda"]
-    environment:
-      <<: *env
-      LLAMA_ARG_N_GPU_LAYERS: ${LLM_GPU_LAYERS:-all}
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    profiles: ["gpu"]
     deploy:
       resources:
         reservations:
@@ -65,17 +95,5 @@ services:
               count: all
               capabilities: [gpu]
 
-  bigopen-server-vulkan:
-    <<: *server
-    image: ghcr.io/bigopenai/bigopen-server:vulkan
-    profiles: ["vulkan"]
-    environment:
-      <<: *env
-      LLAMA_ARG_N_GPU_LAYERS: ${LLM_GPU_LAYERS:-all}
-    devices:
-      - /dev/dri:/dev/dri
-    group_add:
-      - "${GPU_GROUP_ID:-44}"
-
 volumes:
-  bigopen_data:
+  bigopen_models:
