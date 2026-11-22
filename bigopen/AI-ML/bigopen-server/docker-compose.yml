@@ -64,14 +64,15 @@ x-nvidia: &nvidia
 
 services:
   # Puts the default model in the models folder before the backend starts. Skipped when
-  # the file is already there; set LLM_DEFAULT_MODEL_FILE to an empty value to turn it off.
+  # the file is already there; clear LLM_DEFAULT_MODEL_FILE to turn it off (no colon in the default
+  # below on purpose: an empty value is kept, not replaced by the default).
   model-init:
     image: curlimages/curl:8.11.1
     user: root
     restart: "no"
     environment:
       MODEL_REPO: ${LLM_DEFAULT_MODEL_REPO:-Qwen/Qwen2.5-0.5B-Instruct-GGUF}
-      MODEL_FILE: ${LLM_DEFAULT_MODEL_FILE:-qwen2.5-0.5b-instruct-q4_k_m.gguf}
+      MODEL_FILE: ${LLM_DEFAULT_MODEL_FILE-qwen2.5-0.5b-instruct-q4_k_m.gguf}
       HF_TOKEN: ${HF_TOKEN:-}
     volumes:
       - ${LLM_MODELS_DIR:-${BIGOPEN_USER_HOME:-${HOME}}/.bigopen/models}:/models
@@ -81,20 +82,33 @@ services:
       - |
         [ -z "$$MODEL_FILE" ] && exit 0
         repo=/models/models--$$(echo "$$MODEL_REPO" | sed 's|/|--|')
-        # The server resolves snapshots through refs/main, so use the commit it points to.
+        # The server lists a cached model only when refs/main holds a real 40-character commit and
+        # snapshots/<commit> exists. Anything else (for example the text "main") hides the model, and a
+        # later download of the same repo from the UI would replace the ref and orphan this file.
+        mkdir -p "$$repo/refs"
         rev=$$(cat "$$repo/refs/main" 2>/dev/null)
-        if [ -z "$$rev" ]; then
-          rev=main
-          mkdir -p "$$repo/refs"
-          printf main > "$$repo/refs/main"
+        if ! echo "$$rev" | grep -qE '^[0-9a-f]{40}$$'; then
+          if [ -n "$$HF_TOKEN" ]; then
+            rev=$$(curl -fsSL -m 20 -H "Authorization: Bearer $$HF_TOKEN" "https://huggingface.co/api/models/$$MODEL_REPO" 2>/dev/null | sed -n 's/.*"sha":"\([0-9a-f]\{40\}\)".*/\1/p' | head -n 1)
+          else
+            rev=$$(curl -fsSL -m 20 "https://huggingface.co/api/models/$$MODEL_REPO" 2>/dev/null | sed -n 's/.*"sha":"\([0-9a-f]\{40\}\)".*/\1/p' | head -n 1)
+          fi
+          # Offline or gated: any 40-hex value lists the file locally.
+          [ -n "$$rev" ] || rev=$$(printf '%s' "$$MODEL_REPO" | sha1sum | cut -d' ' -f1)
+          printf '%s' "$$rev" > "$$repo/refs/main"
         fi
         dir="$$repo/snapshots/$$rev"
+        mkdir -p "$$dir"
+        # An earlier version of this step kept the file under snapshots/main, which the server never reads.
+        if [ -d "$$repo/snapshots/main" ]; then
+          mv "$$repo/snapshots/main"/* "$$dir"/ 2>/dev/null
+          rmdir "$$repo/snapshots/main" 2>/dev/null
+        fi
         dest="$$dir/$$MODEL_FILE"
         if [ -s "$$dest" ]; then
           echo "Model already downloaded: $$MODEL_FILE"
           exit 0
         fi
-        mkdir -p "$$dir"
         url="https://huggingface.co/$$MODEL_REPO/resolve/main/$$MODEL_FILE"
         echo "Downloading $$MODEL_FILE from $$MODEL_REPO (this can take a while)..."
         attempt=1

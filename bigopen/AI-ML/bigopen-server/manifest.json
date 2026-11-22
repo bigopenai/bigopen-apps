@@ -3,7 +3,7 @@
   "name": "Llama.cpp Server",
   "description": "The official llama.cpp inference server with the BigOpen chat UI (x86-64 or ARM64; CPU, or an NVIDIA GPU). Download any GGUF model from Hugging Face in the UI; every model on the server shows up in your dashboard.",
   "category": "AI-ML",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "application_port": "8080",
   "license": "MIT",
   "compose_file": "docker-compose.yml"

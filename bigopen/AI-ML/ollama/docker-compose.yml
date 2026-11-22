@@ -7,7 +7,7 @@
 # Hardware is the COMPOSE_PROFILES setting: cpu (default) or gpu for an NVIDIA GPU
 # (needs the NVIDIA Container Toolkit, or Docker Desktop on Windows). Every image is
 # multi-arch (x86-64 and ARM64). Docker on macOS cannot reach the Apple GPU, so a Mac
-# runs cpu. Pull the first model from the UI (Download a model).
+# runs cpu. A small model (LLM_DEFAULT_MODEL) is pulled on first start; pull more from the UI.
 #
 # Every variable with a default below shows up as a setting in the install form,
 # so keep placeholder text out of comments.
@@ -39,6 +39,41 @@ x-backend: &backend
       aliases: [backend]
 
 services:
+  # Pulls a small default model once the server is up, so the UI has something to chat with. Skipped
+  # when the model is already there; clear LLM_DEFAULT_MODEL to turn it off (no colon in the default
+  # below on purpose: an empty value is kept, not replaced by the default).
+  model-init:
+    image: ${OLLAMA_IMAGE:-ollama/ollama}:${OLLAMA_TAG:-latest}
+    restart: "no"
+    environment:
+      OLLAMA_HOST: http://backend:11434
+      MODEL: ${LLM_DEFAULT_MODEL-qwen2.5:0.5b}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        [ -z "$$MODEL" ] && exit 0
+        until ollama list >/dev/null 2>&1; do sleep 2; done
+        if ollama show "$$MODEL" >/dev/null 2>&1; then
+          echo "Model already downloaded: $$MODEL"
+          exit 0
+        fi
+        echo "Downloading $$MODEL (this can take a while)..."
+        attempt=1
+        while [ "$$attempt" -le 5 ]; do
+          if ollama pull "$$MODEL" 2>&1 | tr '\r' '\n'; then
+            if ollama show "$$MODEL" >/dev/null 2>&1; then
+              echo "Model ready: $$MODEL"
+              exit 0
+            fi
+          fi
+          echo "Download attempt $$attempt failed, retrying in 5s..."
+          attempt=$$((attempt + 1))
+          sleep 5
+        done
+        echo "Could not download $$MODEL. Check the model name (for example qwen2.5:0.5b)."
+        exit 1
+
   backend-cpu:
     <<: *backend
     profiles: ["cpu"]

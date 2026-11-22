@@ -3,7 +3,7 @@
   "name": "Ollama",
   "description": "The official Ollama server with the BigOpen chat UI (x86-64 or ARM64; CPU, or an NVIDIA GPU). Pull any model from the Ollama library or Hugging Face in the UI; every model on the server shows up in your dashboard.",
   "category": "AI-ML",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "application_port": "8081",
   "compose_file": "docker-compose.yml"
 }
